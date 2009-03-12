@@ -42,10 +42,6 @@ module DataMapper
       end
 
       module InstanceMethods
-        def initialize
-          self.body = { :model_type => self.class.to_s}
-        end
-        
         def indexes
           self.class.indexes
         end
