@@ -21,12 +21,36 @@ module DataMapper
 
       module ClassMethods
         def index_on(field)
+          add_index field
+          name = self.name + field.to_s.camel_case
+          storage_name = Extlib::Inflection.tableize(name)
+          model_name = Extlib::Inflection.classify(name)
+          model = DataMapper::Model.new(storage_name)
+          model.property field.to_sym, String
+          model.belongs_to Extlib::Inflection.underscore(self.name).gsub('/', '_').to_sym, :parent_key => [ :id ]
+          has n, Extlib::Inflection.underscore(model_name).gsub('/', '_').to_sym
+          Object.const_set(model_name, model)
+        end
+        
+        def indexes
+          @indexes ||= []
+        end
+        
+        def add_index(field)
+          indexes << field
         end
       end
 
       module InstanceMethods
-
-       private
+        def initialize
+          self.body = { :model_type => self.class.to_s}
+        end
+        
+        def indexes
+          self.class.indexes
+        end
+        
+        private
 
       end
     end # List
