@@ -13,10 +13,10 @@ module DataMapper
           "entities"
         end
         
-        property :added_id, DataMapper::Types::Serial, :serial => true unless properties.detect{|p| p.name == :added_id && p.type == Serial}
-        property :id, DataMapper::Types::UUID, :unique => true, :nullable => false unless properties.detect{|p| p.name == :id && p.type == Binary}
-        property :updated, DateTime, :key => true unless properties.detect{|p| p.name == :updated && p.type == DateTime}
-        property :body, DataMapper::Types::Json unless properties.detect{|p| p.name == :body && p.type == Text}
+        property :added_id, DataMapper::Types::Serial, :key => false unless properties.has_property?(:added_id) && properties[:added_id].type == DataMapper::Types::Serial
+        property :id, DataMapper::Types::UUID, :unique => true, :nullable => false unless properties.has_property?(:id) && properties[:id].type == DataMapper::Types::UUID
+        property :updated, DateTime, :key => true unless properties.has_property?(:updated) && properties[:updated].type == DateTime
+        property :body, DataMapper::Types::Json unless properties.has_property?(:body) && properties[:body].type == DataMapper::Types::Json
       end
 
       module ClassMethods
@@ -28,7 +28,7 @@ module DataMapper
           model = DataMapper::Model.new(storage_name)
           model.property field.to_sym, String
           model.belongs_to Extlib::Inflection.underscore(self.name).gsub('/', '_').to_sym, :parent_key => [ :id ]
-          has n, Extlib::Inflection.underscore(model_name).gsub('/', '_').to_sym
+          has n, Extlib::Inflection.underscore(model_name).gsub('/', '_').plural.to_sym
           Object.const_set(model_name, model)
         end
         

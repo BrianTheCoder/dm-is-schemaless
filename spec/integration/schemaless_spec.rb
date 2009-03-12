@@ -61,7 +61,7 @@ describe 'DataMapper::Is::Schemaless' do
     end
     
     it 'should define a has n relationship on the model' do
-      Message.relationships[:message_user_id].should_not be_nil
+      Message.relationships[:message_user_ids].should_not be_nil
     end
     
     it 'should define a belongs_to relationship on the index table' do
