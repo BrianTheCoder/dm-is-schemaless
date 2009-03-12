@@ -19,9 +19,9 @@ require 'dm-is-schemaless'
 task :default => 'spec:run'
 
 PROJ.name = 'dm-is-schemaless'
-PROJ.authors = 'FIXME (who is writing this software)'
-PROJ.email = 'FIXME (your e-mail)'
-PROJ.url = 'FIXME (project homepage)'
+PROJ.authors = 'Brian Smith'
+PROJ.email = 'brian@46blocks.com'
+PROJ.url = 'd'
 PROJ.version = DmIsSchemaless::VERSION
 PROJ.rubyforge.name = 'dm-is-schemaless'
 

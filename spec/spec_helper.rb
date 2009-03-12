@@ -1,16 +1,30 @@
+require 'pathname'
+require 'rubygems'
 
-require File.expand_path(
-    File.join(File.dirname(__FILE__), %w[.. lib dm-is-schemaless]))
+gem 'rspec', '~>1.1.11'
+require 'spec'
 
-Spec::Runner.configure do |config|
-  # == Mock Framework
-  #
-  # RSpec uses it's own mocking framework by default. If you prefer to
-  # use mocha, flexmock or RR, uncomment the appropriate line:
-  #
-  # config.mock_with :mocha
-  # config.mock_with :flexmock
-  # config.mock_with :rr
+ROOT = Pathname(__FILE__).dirname.parent.expand_path
+
+require ROOT + 'lib/dm-is-schemaless'
+
+require ROOT + 'spec/models'
+
+def load_driver(name, default_uri)
+  return false if ENV['ADAPTER'] != name.to_s
+
+  begin
+    DataMapper.setup(name, ENV["#{name.to_s.upcase}_SPEC_URI"] || default_uri)
+    DataMapper::Repository.adapters[:default] =  DataMapper::Repository.adapters[name]
+    true
+  rescue LoadError => e
+    warn "Could not load do_#{name}: #{e}"
+    false
+  end
 end
 
-# EOF
+ENV['ADAPTER'] ||= 'sqlite3'
+
+HAS_SQLITE3  = load_driver(:sqlite3,  'sqlite3::memory:')
+HAS_MYSQL    = load_driver(:mysql,    'mysql://localhost/dm_core_test')
+HAS_POSTGRES = load_driver(:postgres, 'postgres://postgres@localhost/dm_core_test')
