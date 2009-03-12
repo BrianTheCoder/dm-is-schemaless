@@ -10,4 +10,4 @@ require ROOT + 'lib/dm-is-schemaless'
 
 require ROOT + 'spec/models'
 
-DataMapper.setup(:default, 'sqlite3::test.db')
+DataMapper.setup(:default, 'sqlite3::memory:')

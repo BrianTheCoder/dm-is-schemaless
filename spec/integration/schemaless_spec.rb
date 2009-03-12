@@ -4,6 +4,7 @@ require Pathname(__FILE__).dirname.expand_path.parent + 'spec_helper'
 describe 'DataMapper::Is::Schemaless' do
 
   before :each do
+    DataMapper.auto_migrate!
     @message = Message.new
     @photo = Photo.new
   end
