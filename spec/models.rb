@@ -3,7 +3,7 @@ class Message
   
   is :schemaless
   
-  index_on :user_id
+  index_on :iso_language_code
 end
 
 class Photo
