@@ -31,13 +31,25 @@ module DataMapper
           indexes[field] = ::Schemaless::Index.new(self, field)
         end
         
-        def by_index(field,conds)
-          raise(DataMapper::Is::Schemaless::NoIndex, "There is no index on #{field} add \"index_on :#{field}\" in your model to fix this") if indexes[field].nil?
-          key = "#{indexes[field].assoc_name}.#{field}"
-          if conds.is_a?(String) || conds.is_a?(Numeric)
-            all(key => conds)
-          elsif conds.is_a?(Hash)
-            all("#{key}.#{conds.keys.first}" => conds.values.first) 
+        def all(query = {})
+          super transform_query(query)
+        end
+        
+        def first(query = {})
+          super transform_query(query)
+        end
+        
+        private
+        
+        def transform_query(query)
+          query.reject do |k,v|
+            name = k.is_a?(DataMapper::Query::Operator) ? k.target : k
+            if indexes.has_key?(name)
+              key = "#{indexes[name].assoc_name}.#{name}"
+              key << ".#{k.operator}" if k.is_a?(DataMapper::Query::Operator)
+              query[key] = v
+              query.delete(k)
+            end
           end
         end
       end
