@@ -62,10 +62,6 @@ module DataMapper
           self.updated = Time.now.to_i
         end
         
-        def indexes
-          self.class.indexes
-        end
-        
         def body=(val)
           #convert keys to strings
           normalized = Hash.new
@@ -82,13 +78,6 @@ module DataMapper
             unless body.has_key?('model_type')
               body['model_type'] = self.class.to_s
             end
-          end
-          
-          def new_model(key, value)
-            model = value.last.new
-            model.send(:"#{key}=", body[key])
-            model.send(:"#{self.class.to_s.downcase}=",self)
-            self.send(:"#{value.first}=",model)
           end
       end
     end # List
