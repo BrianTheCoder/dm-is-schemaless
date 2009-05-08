@@ -15,7 +15,6 @@ module Schemaless
       @parent = :"#{model.to_s.snake_case}"
       @resource = index_model(model)
       @assoc_name = name.snake_case.to_sym
-      model.has 1, assoc_name, :child_key => [:"#{parent}_id"], :parent_key => [:id]
       Object.const_set(model_name, resource)
       update_field_callbacks(model)
     end
@@ -34,6 +33,7 @@ module Schemaless
     
     def update_field_callbacks(model)
       model.class_eval <<-RUBY
+        has n, :#{assoc_name}, :child_key => [:#{parent}_id], :parent_key => [:id]
         def #{assoc_name}(opts = {})
           #{resource}.first(opts.merge(:#{parent}_id => id))
         end
