@@ -4,6 +4,7 @@ require 'uuidtools'
 module DataMapper
   module Is
     module Schemaless
+      class NoIndex < StandardError; end
 
       def is_schemaless(options={})
         options = {  }.merge(options)
@@ -21,19 +22,23 @@ module DataMapper
         property :body, DataMapper::Types::Json unless properties.has_property?(:body) && properties[:body].type == DataMapper::Types::Json
         
         before :save, :add_model_type
-        before :save, :update_indexes
       end
 
       module ClassMethods
         
+        
         def index_on(field)
           indexes[field] = ::Schemaless::Index.new(self, field)
-          
-          instance_eval <<-RUBY, __FILE__, __LINE__
-            def by_#{field}(val,opts = {})
-              keys = indexes[:"#{field}"].resource.all(:"#{field}" => val).map{|i| i.message_id}
-            end
-          RUBY
+        end
+        
+        def by_index(field,conds)
+          raise(DataMapper::Is::Schemaless::NoIndex, "There is no index on #{field} add \"index_on :#{field}\" in your model to fix this") if indexes[field].nil?
+          key = "#{indexes[field].assoc_name}.#{field}"
+          if conds.is_a?(String) || conds.is_a?(Numeric)
+            all(key => conds)
+          elsif conds.is_a?(Hash)
+            all("#{key}.#{conds.keys.first}" => conds.values.first) 
+          end
         end
       end
 
@@ -49,19 +54,21 @@ module DataMapper
           self.class.indexes
         end
         
+        def body=(val)
+          #convert keys to strings
+          normalized = Hash.new
+          val.each{|k,v| normalized[k.to_s] = v }
+          attribute_set(:body, normalized)
+        end
+        
+        def body
+          Mash.new(attribute_get(:body))
+        end
+        
         private
           def add_model_type
             unless body.has_key?('model_type')
               body['model_type'] = self.class.to_s
-            end
-          end
-          
-          def update_indexes
-            self.class.indexes.each do |key, index_model|
-              if body.has_key?(key.to_s)
-                index = index_model.resource.new(key => body[key.to_s])
-                self.send(:"#{index_model.assoc_name}=",index)
-              end
             end
           end
           
