@@ -17,8 +17,8 @@ module DataMapper
         storage_names[repository_name] = 'entities'
         
         property :added_id, DataMapper::Types::Serial, :key => false unless properties.has_property?(:added_id) && properties[:added_id].type == DataMapper::Types::Serial
-        property :id, String, :unique => true, :nullable => false unless properties.has_property?(:id) && properties[:id].type == String
-        property :updated, DataMapper::Types::EpochTime, :key => true unless properties.has_property?(:updated) && properties[:updated].type == EpochTime
+        property :id, String, :unique => true, :nullable => false, :index => true, :length => 16 unless properties.has_property?(:id) && properties[:id].type == String
+        property :updated, DataMapper::Types::EpochTime, :key => true, :index => true unless properties.has_property?(:updated) && properties[:updated].type == EpochTime
         property :body, DataMapper::Types::Json unless properties.has_property?(:body) && properties[:body].type == DataMapper::Types::Json
         
         before :save, :add_model_type

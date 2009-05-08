@@ -22,8 +22,8 @@ module Schemaless
     
     def index_model(model)
       resource = DataMapper::Model.new(storage_name)
-      resource.property field.to_sym, String, :key => true
-      resource.property :"#{parent}_id", String, :key => true
+      resource.property field.to_sym, String, :key => true, :index => true
+      resource.property :"#{parent}_id", String, :key => true, :index => true
       resource.class_eval <<-RUBY
         def #{parent}(opts = {})
           #{model}.first(opts.merge(:id => self.#{parent}_id))
