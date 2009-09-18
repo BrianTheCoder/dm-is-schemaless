@@ -23,7 +23,7 @@ module DataMapper
     
         def index_model(model)
           resource = DataMapper::Model.new
-          resource.storage_names[:default] = storage_name
+          resource.storage_names[repository_name] = storage_name
           resource.property :"#{field}",     String, :key => true, :index => true
           resource.property :"#{parent}_id", String, :key => true, :index => true
           resource.belongs_to :"#{parent}"

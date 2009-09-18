@@ -22,7 +22,7 @@ module DataMapper
         class_inheritable_accessor(:indexes)
         self.indexes ||= {}
         
-        self.storage_names[:default] = 'entities'
+        storage_names[repository_name] = 'entities'
         
         property :added_id, DataMapper::Types::Serial, :key => false unless properties.named?(:added_id) && properties[:added_id].type == DataMapper::Types::Serial
         property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true unless properties.named?(:id) && properties[:id].type == String
