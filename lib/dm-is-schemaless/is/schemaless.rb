@@ -1,34 +1,40 @@
-require 'dm-types'
-require 'uuidtools'
-
 module DataMapper
   module Is
     module Schemaless
-      class NoIndex < StandardError; end
+      ##
+      # fired when your plugin gets included into Resource
+      #
+      def self.included(base)
+      end
+      ##
+      # Methods that should be included in DataMapper::Model.
+      # Normally this should just be your generator, so that the namespace
+      # does not get cluttered. ClassMethods and InstanceMethods gets added
+      # in the specific resources when you fire is :example
+      ##
 
-      def is_schemaless(options={})
+      def is_schemaless(options = {})
         options = {  }.merge(options)
+        # Add class-methods
         extend  DataMapper::Is::Schemaless::ClassMethods
+        # Add instance-methods
         include DataMapper::Is::Schemaless::InstanceMethods
-        
         class_inheritable_accessor(:indexes)
         self.indexes ||= {}
         
-        storage_names[repository_name] = 'entities'
+        self.storage_names[:default] = 'entities'
         
-        property :added_id, DataMapper::Types::Serial, :key => false unless properties.has_property?(:added_id) && properties[:added_id].type == DataMapper::Types::Serial
-        property :id, String, :unique => true, :nullable => false, :index => true unless properties.has_property?(:id) && properties[:id].type == String
-        property :updated, DataMapper::Types::EpochTime, :key => true, :index => true unless properties.has_property?(:updated) && properties[:updated].type == EpochTime
-        property :body, DataMapper::Types::Json unless properties.has_property?(:body) && properties[:body].type == DataMapper::Types::Json
+        property :added_id, DataMapper::Types::Serial, :key => false unless properties.named?(:added_id) && properties[:added_id].type == DataMapper::Types::Serial
+        property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true unless properties.named?(:id) && properties[:id].type == String
+        property :updated, DataMapper::Types::EpochTime, :key => true, :index => true unless properties.named?(:updated) && properties[:updated].type == EpochTime
+        property :body, DataMapper::Types::Json unless properties.named?(:body) && properties[:body].type == DataMapper::Types::Json
         
         before :save, :add_model_type
       end
 
       module ClassMethods
-        
-        
         def index_on(field)
-          indexes[field] = ::Schemaless::Index.new(self, field)
+          indexes[field] = Index.new(self, field)
         end
         
         def all(query = {})
@@ -42,7 +48,7 @@ module DataMapper
         private
         
         def transform_query(query)
-          query.reject do |k,v|
+          query.each do |k,v|
             name = k.is_a?(DataMapper::Query::Operator) ? k.target : k
             if indexes.has_key?(name)
               key = "#{indexes[name].assoc_name}.#{name}"
@@ -73,6 +79,19 @@ module DataMapper
           Mash.new(attribute_get(:body))
         end
         
+        def method_missing(method_symbol, *arguments)
+          method_name = method_symbol.to_s
+          case method_name[-1..-1]
+          when "="
+            body[method_name[0..-2]] = arguments.first
+          when "?"
+            body[method_name[0..-2]] == true
+          else
+            # Returns nil on failure so forms will work
+            body.has_key?(method_name) ? body[method_name] : nil
+          end
+        end
+        
         private
           def add_model_type
             unless body.has_key?('model_type')
@@ -80,6 +99,6 @@ module DataMapper
             end
           end
       end
-    end # List
-  end # Is 
+    end # Schemaless
+  end # Is
 end # DataMapper

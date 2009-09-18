@@ -1,56 +1,24 @@
-require 'rubygems'
-require 'rake'
+require 'pathname'
 
-begin
-  require 'jeweler'
-  Jeweler::Tasks.new do |gem|
-    gem.name = "dm-is-schemaless"
-    gem.summary = %Q{A way to store schemaless data in any supported adapter}
-    gem.email = "wbsmith83@gmail.com"
-    gem.homepage = "http://github.com/BrianTheCoder/dm-is-schemaless"
-    gem.authors = ["brianthecoder"]
+ROOT    = Pathname(__FILE__).dirname.expand_path
+JRUBY   = RUBY_PLATFORM =~ /java/
+WINDOWS = Gem.win_platform?
+SUDO    = (WINDOWS || JRUBY) ? '' : ('sudo' unless ENV['SUDOLESS'])
 
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
-  end
-rescue LoadError
-  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
+require ROOT + 'lib/dm-is-schemaless/is/version'
+
+AUTHOR = 'Brian Smith'
+EMAIL  = 'brian@memoryreel.com'
+GEM_NAME = 'dm-is-schemaless'
+GEM_VERSION = DataMapper::Is::Schemaless::VERSION
+GEM_DEPENDENCIES = [['dm-core', GEM_VERSION], ['dm-types', GEM_VERSION], ['guid']]
+GEM_CLEAN = %w[ log pkg coverage ]
+GEM_EXTRAS = { :has_rdoc => true, :extra_rdoc_files => %w[ README.rdoc LICENSE TODO History.rdoc ] }
+
+PROJECT_NAME = 'dm is schemaless'
+PROJECT_URL  = "http://github.com/datamapper/dm-more/tree/master/#{GEM_NAME}"
+PROJECT_DESCRIPTION = PROJECT_SUMMARY = 'A plugin for datamapper that allows you to use rdbms\'s like a schemaless storage system'
+
+[ ROOT, ROOT.parent ].each do |dir|
+  Pathname.glob(dir.join('tasks/**/*.rb').to_s).each { |f| require f }
 end
-
-require 'rake/testtask'
-Rake::TestTask.new(:test) do |test|
-  test.libs << 'lib' << 'test'
-  test.pattern = 'test/**/*_test.rb'
-  test.verbose = false
-end
-
-begin
-  require 'rcov/rcovtask'
-  Rcov::RcovTask.new do |test|
-    test.libs << 'test'
-    test.pattern = 'test/**/*_test.rb'
-    test.verbose = true
-  end
-rescue LoadError
-  task :rcov do
-    abort "RCov is not available. In order to run rcov, you must: sudo gem install spicycode-rcov"
-  end
-end
-
-
-task :default => :test
-
-require 'rake/rdoctask'
-Rake::RDocTask.new do |rdoc|
-  if File.exist?('VERSION.yml')
-    config = YAML.load(File.read('VERSION.yml'))
-    version = "#{config[:major]}.#{config[:minor]}.#{config[:patch]}"
-  else
-    version = ""
-  end
-
-  rdoc.rdoc_dir = 'rdoc'
-  rdoc.title = "Rat Pack #{version}"
-  rdoc.rdoc_files.include('README*')
-  rdoc.rdoc_files.include('lib/**/*.rb')
-end
-
