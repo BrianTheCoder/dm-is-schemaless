@@ -22,7 +22,7 @@ module DataMapper
         class_inheritable_accessor(:indexes)
         self.indexes ||= {}
         
-        storage_names[repository_name] = 'entities'
+        storage_names[DataMapper.repository.name] = 'entities'
         
         property :added_id, DataMapper::Types::Serial, :key => false unless properties.named?(:added_id) && properties[:added_id].type == DataMapper::Types::Serial
         property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true unless properties.named?(:id) && properties[:id].type == String
@@ -33,8 +33,8 @@ module DataMapper
       end
 
       module ClassMethods
-        def index_on(field)
-          indexes[field] = Index.new(self, field)
+        def index_on(field, opts = {})
+          indexes[field] = Index.new(self, field, opts)
         end
         
         def all(query = {})

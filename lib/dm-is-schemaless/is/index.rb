@@ -4,34 +4,33 @@ module DataMapper
       class Index
         attr_accessor :storage_name, 
                       :model_name, 
-                      :resource, 
                       :field, 
                       :assoc_name,
                       :parent
                   
-        def initialize(model,field)
+        def initialize(resource,field, opts)
           name = "#{field.to_s.camel_case}Index"
           @storage_name = Extlib::Inflection.tableize(name)
           @field = field
           @model_name = Extlib::Inflection.classify(name)
-          @parent = :"#{model.to_s.snake_case}"
-          @resource = index_model(model)
+          @parent = :"#{resource.to_s.snake_case}"
+          model = index_model
           @assoc_name = name.snake_case.to_sym
-          Object.const_set(model_name, resource)
-          update_field_callbacks(model)
+          Object.const_set(model_name, model)
+          update_field_callbacks(resource)
         end
     
-        def index_model(model)
-          resource = DataMapper::Model.new
-          resource.storage_names[repository_name] = storage_name
-          resource.property :"#{field}",     String, :key => true, :index => true
-          resource.property :"#{parent}_id", String, :key => true, :index => true
-          resource.belongs_to :"#{parent}"
-          resource
+        def index_model
+          model = DataMapper::Model.new
+          model.storage_names[DataMapper.repository.name] = storage_name
+          model.property :"#{field}",     String, :key => true, :index => true
+          model.property :"#{parent}_id", String, :key => true, :index => true
+          model.belongs_to :"#{parent}", :parent_key => [ :"#{parent}_id" ]
+          model
         end
     
-        def update_field_callbacks(model)
-          model.class_eval <<-RUBY
+        def update_field_callbacks(resource)
+          resource.class_eval <<-RUBY
             has n, :"#{assoc_name}", :child_key => [ :"#{parent}_id" ], :parent_key => [ :id ]
             def update_#{field}_index
               old = #{resource}.first(:#{parent}_id => id)
@@ -41,7 +40,7 @@ module DataMapper
               end
             end
           RUBY
-          model.before :save, :"update_#{field}_index"
+          resource.before :save, :"update_#{field}_index"
         end
       end
     end
