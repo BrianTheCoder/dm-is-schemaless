@@ -24,10 +24,10 @@ module DataMapper
         
         storage_names[DataMapper.repository.name] = 'entities'
         
-        property :added_id, DataMapper::Types::Serial, :key => false unless properties.named?(:added_id) && properties[:added_id].type == DataMapper::Types::Serial
-        property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true unless properties.named?(:id) && properties[:id].type == String
-        property :updated, DataMapper::Types::EpochTime, :key => true, :index => true unless properties.named?(:updated) && properties[:updated].type == EpochTime
-        property :body, DataMapper::Types::Json unless properties.named?(:body) && properties[:body].type == DataMapper::Types::Json
+        property :added_id, DataMapper::Types::Serial, :key => false 
+        property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true
+        property :updated, DataMapper::Types::EpochTime, :key => true, :index => true
+        property :body, DataMapper::Types::Json 
         
         before :save, :add_model_type
       end
@@ -42,6 +42,10 @@ module DataMapper
         end
         
         def first(query = {})
+          super transform_query(query)
+        end
+        
+        def last(query = {})
           super transform_query(query)
         end
         
