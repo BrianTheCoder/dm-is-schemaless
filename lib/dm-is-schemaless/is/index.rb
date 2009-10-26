@@ -8,7 +8,7 @@ module DataMapper
           name = "#{field.to_s.camel_case}Index"
           @storage_name = Extlib::Inflection.tableize(name)
           @parent = :"#{resource.to_s.snake_case}"
-          # update_field_callbacks(resource)
+          update_field_callbacks(resource, field)
           build_resource(name, field, resource)
         end
 
