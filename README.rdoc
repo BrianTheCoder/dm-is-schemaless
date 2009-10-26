@@ -1,3 +1,48 @@
-= dm-is-example
+= dm-is-schemaless
 
-Description of plugin. What it does, and how.
+Inspired by http://bret.appspot.com/entry/how-friendfeed-uses-mysql I wanted to build a way to do that seamless. Hence this plugin.
+
+= Basics
+
+It's pretty straight forward. The bare minimum to use it is:
+
+  class Message
+    include DataMapper::Resource
+
+    is :schemaless
+    
+    # The following properties will be defined automatically
+    # property :added_id, DataMapper::Types::Serial, :key => false 
+    # property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true
+    # property :updated, DataMapper::Types::EpochTime, :key => true, :index => true
+    # property :body, DataMapper::Types::Json
+  end
+  
+Away you go! By default it creates keys and a few other fields. It adds a bit of method missing magic so any property you want automatically has name, name=, and name?. You should use these instead of accessing the body hash directly in order to keep nil indexes from being setup.
+
+= Indexes
+
+Declaring indexes. Just use the class level index_on method and supply a symbol. This will create the association and a table called <property>Index. It also creates an update hook to monitor the record when its save and handle creating/updating/destroying the index record.
+
+  class Message
+    include DataMapper::Resource
+  
+    is :schemaless
+  
+    index_on :email
+  end
+  
+= Querying
+
+This is handled for you automatically. After you create an index on a property whenever you use that in a query it will transform the query to look it up on the index table instead. So internally here's what happens.
+
+  # original query
+  Message.all(:email => 'test@gmail.com')
+  # transformed query
+  Message.all('email_index.email' => 'test@gmail.com')
+  
+This will also still support all of DM's query operators.
+
+Props to Dan Kubb for all his awesome work on DM and helping fix/refine this code.
+
+File all bugs as issues on the project http://github.com/BrianTheCoder/dm-is-schemaless

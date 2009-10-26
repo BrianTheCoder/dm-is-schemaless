@@ -3,8 +3,6 @@ require 'dm-is-schemaless/is/index'
 require 'dm-types'
 require 'guid'
 
-module DataMapper
-  module Model
-    include DataMapper::Is::Schemaless
-  end
+module DataMapper::Model
+  include DataMapper::Is::Schemaless
 end
