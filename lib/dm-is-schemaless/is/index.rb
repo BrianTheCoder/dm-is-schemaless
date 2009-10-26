@@ -18,11 +18,10 @@ module DataMapper
           model.class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def update_#{field}_index
               if body.key?('#{field}')
-                attributes = { :#{field} => body['#{field}'] }
-                self.#{assoc_name} ||= #{index_model}.new(attributes)
-                #{assoc_name}.update(attributes) unless #{assoc_name}.dirty?
-              elsif #{assoc_name}
-                #{assoc_name}.destroy
+                self.#{assoc_name} ||= #{index_model}.new
+                #{assoc_name}.#{field} = body['#{field}']
+              elsif #{assoc_name} && #{assoc_name}.destroy
+                self.#{assoc_name} = nil
               end
             end
           RUBY
