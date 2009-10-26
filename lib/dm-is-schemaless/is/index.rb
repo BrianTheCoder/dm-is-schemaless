@@ -2,36 +2,20 @@ module DataMapper
   module Is
     module Schemaless
       class Index
-        attr_accessor :storage_name, 
-                      :model_name, 
-                      :field, 
-                      :assoc_name,
-                      :parent
-                  
+        attr_accessor :storage_name, :parent_str
+                          
         def initialize(resource,field, opts)
           name = "#{field.to_s.camel_case}Index"
           @storage_name = Extlib::Inflection.tableize(name)
-          @field = field
-          @model_name = Extlib::Inflection.classify(name)
           @parent = :"#{resource.to_s.snake_case}"
-          model = index_model
-          @assoc_name = name.snake_case.to_sym
-          Object.const_set(model_name, model)
-          update_field_callbacks(resource)
+          # update_field_callbacks(resource)
+          build_resource(name, field, resource)
         end
-    
-        def index_model
-          model = DataMapper::Model.new
-          model.storage_names[DataMapper.repository.name] = storage_name
-          model.property :"#{field}",     String, :key => true, :index => true
-          model.property :"#{parent}_id", String, :key => true, :index => true
-          model.belongs_to :"#{parent}", :parent_key => [ :"#{parent}_id" ]
-          model
-        end
-    
-        def update_field_callbacks(resource)
+
+        def update_field_callbacks(resource, field)
+          p resource
           resource.class_eval <<-RUBY
-            has n, :"#{assoc_name}", :child_key => [ :"#{parent}_id" ], :parent_key => [ :id ]
+            has n, :"#{storage_name}", :child_key => [ :"#{parent}_id" ], :parent_key => [ :id ]
             def update_#{field}_index
               old = #{resource}.first(:#{parent}_id => id)
               old.destroy unless old.nil?
@@ -41,6 +25,20 @@ module DataMapper
             end
           RUBY
           resource.before :save, :"update_#{field}_index"
+        end
+        
+        def build_resource(name, field, parent)
+          Object.class_eval <<-RUBY
+            class #{name}
+              include DataMapper::Resource
+              property :"#{field}",          String, :key => true, :index => true
+            end
+          RUBY
+          klass = Object.const_get(name)
+          parent.key.each do |prop|
+            klass.property :"#{@parent}_#{prop.name}", prop.type, :key => true, :index => true
+          end
+          klass.belongs_to @parent, :parent_key => parent.key.map(&:name)
         end
       end
     end

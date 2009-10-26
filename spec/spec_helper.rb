@@ -1,4 +1,5 @@
 require 'rubygems'
+require 'logger'
 
 # use local dm-core if running from a typical dev checkout.
 lib = File.join('..', '..', 'dm-core', 'lib')
@@ -30,3 +31,5 @@ ENV['ADAPTER'] ||= 'postgres'
 HAS_SQLITE3  = load_driver(:sqlite3,  'sqlite3::memory:')
 HAS_MYSQL    = load_driver(:mysql,    'mysql://localhost/schemaless_test')
 HAS_POSTGRES = load_driver(:postgres, 'postgres://postgres@localhost/schemaless_test')
+
+DataObjects::Postgres.logger = Logger.new(STDOUT)

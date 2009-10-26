@@ -33,6 +33,8 @@ module DataMapper
       end
 
       module ClassMethods
+        def storage_name(repository_name = default_repository_name); 'entities' end
+
         def index_on(field, opts = {})
           indexes[field] = Index.new(self, field, opts)
         end
