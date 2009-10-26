@@ -83,11 +83,16 @@ module DataMapper
           Mash.new(attribute_get(:body))
         end
         
-        def method_missing(method_symbol, *arguments)
+        def method_missing(method_symbol, *args)
           method_name = method_symbol.to_s
           case method_name[-1..-1]
           when "="
-            body[method_name[0..-2]] = arguments.first
+            val = args.first
+            if val.blank? && body.has_key?(method_name[0..-2])
+              body.delete(method_name[0..-2])
+            else
+              body[method_name[0..-2]] = args.first
+            end
           when "?"
             body[method_name[0..-2]] == true
           else

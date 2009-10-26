@@ -2,7 +2,9 @@ module DataMapper
   module Is
     module Schemaless
       class Index
-        attr_accessor :storage_name, :parent
+        attr_accessor :storage_name, :parent, :assoc_name
+        
+        class IndexingError < StandardError; end
                           
         def initialize(resource,field, opts)
           name = "#{field.to_s.camel_case}Index"
@@ -13,7 +15,7 @@ module DataMapper
         end
 
         def update_field_callbacks(model, field, index_model)
-          assoc_name = index_model.to_s.snake_case
+          self.assoc_name = index_model.to_s.snake_case
           model.has 1, assoc_name.to_sym
           model.class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def update_#{field}_index
@@ -22,6 +24,7 @@ module DataMapper
                 #{assoc_name}.#{field} = body['#{field}']
               elsif #{assoc_name} && #{assoc_name}.destroy
                 self.#{assoc_name} = nil
+              else
               end
             end
           RUBY

@@ -87,10 +87,38 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
         @message.email = Faker::Internet.free_email
         @message.save
         @message.reload
-        p @message.body
         @message.email_index.should_not be_nil
       end
+      
+      it 'should destroy the index if the value becomes nil' do
+        @message.email = Faker::Internet.free_email
+        @message.save
+        @message.email_index.should_not be_nil
+        @message.email = nil
+        @message.save
+        @message.email_index.should be_nil        
+      end
+      
+      it 'should update the index when the value is changed' do
+        @message.email = Faker::Internet.free_email
+        @message.save
+        @message.reload
+        @message.email_index.should_not be_nil
+        email = Faker::Internet.free_email
+        @message.email = email
+        @message.save
+        @message.email_index.email.should == email
+      end
     end
-
+    
+    describe 'querying' do
+      it 'should look in the index tables if the property is indexed' do
+        email = Faker::Internet.free_email
+        @message.email = email
+        @message.save
+        queried = Message.first(:email => email)
+        queried.id.should == @message.id
+      end
+    end
   end
 end
