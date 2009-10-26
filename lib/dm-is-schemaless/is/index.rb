@@ -32,15 +32,12 @@ module DataMapper
         end
         
         def build_resource(name, field, parent_resource)
-          Object.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-            class #{name}
-              include DataMapper::Resource
-              property :"#{field}",          String, :key => true, :index => true
-            end
-          RUBY
+          klass = Object.const_set(name, Class.new)
+          klass.send(:include, DataMapper::Resource)
+          klass.property field.to_sym, String, :key => true
           klass = Object.const_get(name)
           parent_resource.key.each do |prop|
-            klass.property :"#{@parent}_#{prop.name}", prop.type, :key => true, :index => true
+            klass.property :"#{@parent}_#{prop.name}", prop.type, :key => true
           end
           klass.belongs_to @parent, :parent_key => parent_resource.key.map(&:name)
           klass
