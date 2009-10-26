@@ -53,7 +53,7 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
 
       {
         :email => String,
-        :message_id => String
+        :message_updated => DataMapper::Types::EpochTime
       }.each do |k, v|
         it "has the property #{k}" do
           EmailIndex.properties[k].should_not be_nil
@@ -78,15 +78,16 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
         @message.save
         @msg = Message.first
         @msg.body.should have_key("model_type")
-        @msg.body['model_type'].should == "Message"
+        @msg.model_type.should == "Message"
       end
     end
 
     describe 'update the index' do
       it 'should create a new record on save' do
-        @message.body['email'] = Faker::Internet.free_email
+        @message.email = Faker::Internet.free_email
         @message.save
         @message.reload
+        p @message.body
         @message.email_index.should_not be_nil
       end
     end

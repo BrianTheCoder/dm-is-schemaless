@@ -21,9 +21,7 @@ module DataMapper
         include DataMapper::Is::Schemaless::InstanceMethods
         class_inheritable_accessor(:indexes)
         self.indexes ||= {}
-        
-        storage_names[DataMapper.repository.name] = 'entities'
-        
+                
         property :added_id, DataMapper::Types::Serial, :key => false 
         property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true
         property :updated, DataMapper::Types::EpochTime, :key => true, :index => true

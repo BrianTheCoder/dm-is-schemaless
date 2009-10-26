@@ -32,4 +32,4 @@ HAS_SQLITE3  = load_driver(:sqlite3,  'sqlite3::memory:')
 HAS_MYSQL    = load_driver(:mysql,    'mysql://localhost/schemaless_test')
 HAS_POSTGRES = load_driver(:postgres, 'postgres://postgres@localhost/schemaless_test')
 
-DataObjects::Postgres.logger = Logger.new(STDOUT)
+# DataObjects::Postgres.logger = Logger.new(STDOUT)

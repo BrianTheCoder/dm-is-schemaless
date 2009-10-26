@@ -12,23 +12,21 @@ module DataMapper
           update_field_callbacks(resource, field, index_model)
         end
 
-        def update_field_callbacks(resource, field, index_model)
+        def update_field_callbacks(model, field, index_model)
           assoc_name = index_model.to_s.snake_case
-          resource.class_eval <<-RUBY
-            has 1, :"#{assoc_name}"
+          model.has 1, assoc_name.to_sym
+          model.class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def update_#{field}_index
-              if body.has_key?("#{field}")
-                if #{assoc_name}.blank?
-                  #{assoc_name}.create(:#{field} => body["#{field}"])
-                else
-                  #{assoc_name}.update(:#{field} => body["#{field}"])
-                end
-              else
-                #{assoc_name}.destroy unless #{assoc_name}.blank?
+              if body.key?('#{field}')
+                attributes = { :#{field} => body['#{field}'] }
+                self.#{assoc_name} ||= #{index_model}.new(attributes)
+                #{assoc_name}.update(attributes) unless #{assoc_name}.dirty?
+              elsif #{assoc_name}
+                #{assoc_name}.destroy
               end
             end
           RUBY
-          resource.before :save, :"update_#{field}_index"
+          model.before :save, :"update_#{field}_index"
         end
         
         def build_resource(name, field, parent_resource)
