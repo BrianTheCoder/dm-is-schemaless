@@ -2,32 +2,37 @@ module DataMapper
   module Is
     module Schemaless
       class Index
-        attr_accessor :storage_name, :parent_str
+        attr_accessor :storage_name, :parent
                           
         def initialize(resource,field, opts)
           name = "#{field.to_s.camel_case}Index"
           @storage_name = Extlib::Inflection.tableize(name)
           @parent = :"#{resource.to_s.snake_case}"
+          index_model = build_resource(name, field, resource)
           update_field_callbacks(resource, field)
-          build_resource(name, field, resource)
         end
 
-        def update_field_callbacks(resource, field)
-          p resource
+        def update_field_callbacks(resource, field, index_model)
           resource.class_eval <<-RUBY
-            has n, :"#{storage_name}", :child_key => [ :"#{parent}_id" ], :parent_key => [ :id ]
+            has 1, :"#{storage_name}"
             def update_#{field}_index
-              old = #{resource}.first(:#{parent}_id => id)
-              old.destroy unless old.nil?
               if body.has_key?("#{field}")
-                #{resource}.create(:#{parent}_id => id, :#{field} => body["#{field}"])
+                old = #{storage_name}.first
+                if old.blank?
+                  #{storage_name}.create(:#{field} => body["#{field}"])
+                else
+                  #{storage_name}.first.update(:#{field} => body["#{field}"])
+                end
+              else
+                old = #{storage_name}.first
+                old.destroy unless old.blank?
               end
             end
           RUBY
           resource.before :save, :"update_#{field}_index"
         end
         
-        def build_resource(name, field, parent)
+        def build_resource(name, field, parent_resource)
           Object.class_eval <<-RUBY
             class #{name}
               include DataMapper::Resource
@@ -35,10 +40,11 @@ module DataMapper
             end
           RUBY
           klass = Object.const_get(name)
-          parent.key.each do |prop|
+          parent_resource.key.each do |prop|
             klass.property :"#{@parent}_#{prop.name}", prop.type, :key => true, :index => true
           end
-          klass.belongs_to @parent, :parent_key => parent.key.map(&:name)
+          klass.belongs_to @parent, :parent_key => parent_resource.key.map(&:name)
+          klass
         end
       end
     end
