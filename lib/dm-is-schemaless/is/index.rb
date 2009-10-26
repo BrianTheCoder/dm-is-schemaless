@@ -9,23 +9,22 @@ module DataMapper
           @storage_name = Extlib::Inflection.tableize(name)
           @parent = :"#{resource.to_s.snake_case}"
           index_model = build_resource(name, field, resource)
-          update_field_callbacks(resource, field)
+          update_field_callbacks(resource, field, index_model)
         end
 
         def update_field_callbacks(resource, field, index_model)
+          assoc_name = index_model.to_s.snake_case
           resource.class_eval <<-RUBY
-            has 1, :"#{storage_name}"
+            has 1, :"#{assoc_name}"
             def update_#{field}_index
               if body.has_key?("#{field}")
-                old = #{storage_name}.first
-                if old.blank?
-                  #{storage_name}.create(:#{field} => body["#{field}"])
+                if #{assoc_name}.blank?
+                  #{assoc_name}.create(:#{field} => body["#{field}"])
                 else
-                  #{storage_name}.first.update(:#{field} => body["#{field}"])
+                  #{assoc_name}.update(:#{field} => body["#{field}"])
                 end
               else
-                old = #{storage_name}.first
-                old.destroy unless old.blank?
+                #{assoc_name}.destroy unless #{assoc_name}.blank?
               end
             end
           RUBY
@@ -33,7 +32,7 @@ module DataMapper
         end
         
         def build_resource(name, field, parent_resource)
-          Object.class_eval <<-RUBY
+          Object.class_eval <<-RUBY, __FILE__, __LINE__ + 1
             class #{name}
               include DataMapper::Resource
               property :"#{field}",          String, :key => true, :index => true
