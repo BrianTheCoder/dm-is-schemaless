@@ -23,8 +23,13 @@ module DataMapper
         self.indexes ||= {}
                 
         property :added_id, DataMapper::Types::Serial, :key => false 
-        property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true
-        property :updated, DataMapper::Types::EpochTime, :key => true, :index => true
+        property :id, DataMapper::Types::UUID,  :unique => true, 
+                                                :nullable => false, 
+                                                :index => true,
+                                                :default => Proc.new{ Guid.new.to_s }
+        property :updated, DataMapper::Types::EpochTime,  :key => true, 
+                                                          :index => true, 
+                                                          :default => Proc.new{ Time.now }
         property :body, DataMapper::Types::Json, :default => {}
         
         before :save, :add_model_type
@@ -53,7 +58,6 @@ module DataMapper
         
         def transform_query(query)
           fields_to_rewrite = find_indexes(query)
-          p fields_to_rewrite
           fields_to_rewrite.each do |(field, value)|
             name = field.respond_to?(:target) ? field.target : field
             rewritten_field = "#{indexes[name].assoc_name}.#{name}"
@@ -74,22 +78,28 @@ module DataMapper
         def initialize(args = {})
           super({})
           self.body = args
-          self.id = Guid.new.to_s
-          self.updated = Time.now.to_i
         end
         
         def method_missing(method_symbol, *args)
           method_name = method_symbol.to_s
-          case method_name[-1..-1]
-          when "="
-            val = args.first
-            if val.blank?
-              body.delete(method_name[0..-2])
-            else
-              body[method_name[0..-2]] = args.first
+          if %w(? =).include?(method_name[-1,1])
+            method = method_name[0..-2]
+            operator = method_name[-1,1]
+            if operator == '='
+              set_value(method, args.first)
+            elsif operator == '?'
+              !body[method].blank?
             end
-          when "?" then body[method_name[0..-2]] == true
-          else body[method_name]
+          else 
+            body[method_name]
+          end
+        end
+        
+        def set_value(method, val)
+          if val.blank?
+            body.delete(method)
+          else
+            body[method] = val
           end
         end
         

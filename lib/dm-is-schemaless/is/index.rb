@@ -35,11 +35,10 @@ module DataMapper
           klass = Object.const_set(name, Class.new)
           klass.send(:include, DataMapper::Resource)
           klass.property field.to_sym, String, :key => true
-          klass = Object.const_get(name)
           parent_resource.key.each do |prop|
             klass.property :"#{@parent}_#{prop.name}", prop.type, :key => true
           end
-          klass.belongs_to @parent, :parent_key => parent_resource.key.map(&:name)
+          klass.belongs_to @parent, :parent_key => parent_resource.key.map{|k| k.name }
           klass
         end
       end
