@@ -57,8 +57,7 @@ module DataMapper
         private
         
         def transform_query(query)
-          fields_to_rewrite = find_indexes(query)
-          fields_to_rewrite.each do |(field, value)|
+          find_indexes(query).each do |(field, value)|
             name = field.respond_to?(:target) ? field.target : field
             rewritten_field = "#{indexes[name].assoc_name}.#{name}"
             rewritten_field << ".#{key.operator}" if field.respond_to?(:operator)
