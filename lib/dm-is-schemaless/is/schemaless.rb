@@ -25,7 +25,7 @@ module DataMapper
         property :added_id, DataMapper::Types::Serial, :key => false 
         property :id, DataMapper::Types::UUID, :unique => true, :nullable => false, :index => true
         property :updated, DataMapper::Types::EpochTime, :key => true, :index => true
-        property :body, DataMapper::Types::Json 
+        property :body, DataMapper::Types::Json, :default => {}
         
         before :save, :add_model_type
       end
@@ -52,14 +52,20 @@ module DataMapper
         private
         
         def transform_query(query)
-          query.each do |k,v|
-            name = k.is_a?(DataMapper::Query::Operator) ? k.target : k
-            if indexes.has_key?(name)
-              key = "#{indexes[name].assoc_name}.#{name}"
-              key << ".#{k.operator}" if k.is_a?(DataMapper::Query::Operator)
-              query[key] = v
-              query.delete(k)
-            end
+          fields_to_rewrite = find_indexes(query)
+          p fields_to_rewrite
+          fields_to_rewrite.each do |(field, value)|
+            name = field.respond_to?(:target) ? field.target : field
+            rewritten_field = "#{indexes[name].assoc_name}.#{name}"
+            rewritten_field << ".#{key.operator}" if field.respond_to?(:operator)
+            query[rewritten_field] = value
+            query.delete(key)
+          end
+        end
+        
+        def find_indexes(query)
+          query.select do |key, value|
+            indexes.has_key?(key.respond_to?(:target) ? key.target : key)
           end
         end
       end
@@ -72,32 +78,18 @@ module DataMapper
           self.updated = Time.now.to_i
         end
         
-        def body=(val)
-          #convert keys to strings
-          normalized = Hash.new
-          val.each{|k,v| normalized[k.to_s] = v }
-          attribute_set(:body, normalized)
-        end
-        
-        def body
-          Mash.new(attribute_get(:body))
-        end
-        
         def method_missing(method_symbol, *args)
           method_name = method_symbol.to_s
           case method_name[-1..-1]
           when "="
             val = args.first
-            if val.blank? && body.has_key?(method_name[0..-2])
+            if val.blank?
               body.delete(method_name[0..-2])
             else
               body[method_name[0..-2]] = args.first
             end
-          when "?"
-            body[method_name[0..-2]] == true
-          else
-            # Returns nil on failure so forms will work
-            body.has_key?(method_name) ? body[method_name] : nil
+          when "?" then body[method_name[0..-2]] == true
+          else body[method_name]
           end
         end
         

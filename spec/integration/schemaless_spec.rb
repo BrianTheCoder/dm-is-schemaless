@@ -83,27 +83,24 @@ if HAS_SQLITE3 || HAS_MYSQL || HAS_POSTGRES
     end
 
     describe 'update the index' do
-      it 'should create a new record on save' do
+      before :each do
         @message.email = Faker::Internet.free_email
         @message.save
+        @message.reload
+      end
+      
+      it 'should create a new record on save' do
         @message.reload
         @message.email_index.should_not be_nil
       end
       
       it 'should destroy the index if the value becomes nil' do
-        @message.email = Faker::Internet.free_email
-        @message.save
-        @message.email_index.should_not be_nil
         @message.email = nil
         @message.save
         @message.email_index.should be_nil        
       end
       
       it 'should update the index when the value is changed' do
-        @message.email = Faker::Internet.free_email
-        @message.save
-        @message.reload
-        @message.email_index.should_not be_nil
         email = Faker::Internet.free_email
         @message.email = email
         @message.save
